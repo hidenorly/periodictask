@@ -24,34 +24,7 @@
 #include <memory>
 #include <functional>
 
-class TaskManager;
-
-class Task : public std::enable_shared_from_this<Task>
-{
-protected:
-  std::atomic<bool> mIsRunning;
-  std::weak_ptr<TaskManager> mpTaskManager;
-  std::atomic<bool> mStopRunning;
-
-public:
-  Task(void);
-  virtual ~Task(void);
-
-  // for override
-  virtual void onExecute(void) = 0;
-  virtual void onComplete(void){};
-
-  // for task manager
-public:
-  static void execute(std::shared_ptr<Task> pTask);
-  virtual void cancel(void);
-  inline bool isRunning(void){ return mIsRunning; };
-  void setExecuter(std::weak_ptr<TaskManager> pTaskManager){ mpTaskManager = pTaskManager; };
-
-protected:
-  void _onComplete(void);
-
-};
+class Task;
 
 class TaskManager : public std::enable_shared_from_this<TaskManager>
 {
@@ -68,6 +41,8 @@ public:
   bool isRemainingTasks(void);
   void finalize(void);
 
+  // for task
+public:
   void _onTaskCompletion(std::shared_ptr<Task> pTask);
 
 protected:
@@ -78,6 +53,54 @@ protected:
   std::map<std::shared_ptr<Task>, std::shared_ptr<std::thread>> mThreads;
   std::mutex mMutexTasks;
   std::mutex mMutexThreads;
+
+public:
+  class TaskContext
+  {
+  protected:
+    std::shared_ptr<TaskManager> mTaskManager;
+    std::shared_ptr<Task> mTask;
+  public:
+    TaskContext(std::shared_ptr<TaskManager> pTaskManager, std::shared_ptr<Task> pTask) : mTaskManager(pTaskManager), mTask(pTask){};
+    virtual ~TaskContext(){};
+
+    std::shared_ptr<Task> getTask(void){ return mTask; };
+
+    void callback(void){
+      if( mTaskManager ){
+        mTaskManager->_onTaskCompletion( mTask );
+      }
+    }
+  };
 };
+
+
+class ITask
+{
+public:
+  virtual void onExecute(void) = 0;
+  virtual void onComplete(void){};
+};
+
+class Task : public std::enable_shared_from_this<Task>, public ITask
+{
+protected:
+  std::atomic<bool> mIsRunning;
+  std::atomic<bool> mStopRunning;
+
+public:
+  Task(void);
+  virtual ~Task(void);
+
+  // for task manager
+public:
+  static void execute(std::shared_ptr<TaskManager::TaskContext> pTaskContext);
+  virtual void cancel(void);
+  inline bool isRunning(void){ return mIsRunning; };
+
+protected:
+  void _execute(std::shared_ptr<TaskManager::TaskContext> pTaskContext);
+};
+
 
 #endif /* __PERIODIC_TASK_HPP__ */

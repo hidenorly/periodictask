@@ -31,16 +31,26 @@ Task::~Task(void)
 }
 
 // -- Task
-void Task::execute(std::shared_ptr<Task> pTask)
+void Task::_execute(std::shared_ptr<TaskManager::TaskContext> pTaskContext)
 {
-  if( pTask ){
-    pTask->mStopRunning = false;
-    pTask->mIsRunning = true;
-      pTask->onExecute();
-      pTask->onComplete();
-    pTask->mIsRunning = false;
-    pTask->mStopRunning = false;
-    pTask->_onComplete();
+  if( pTaskContext && pTaskContext->getTask() == shared_from_this() ){
+    mStopRunning = false;
+    mIsRunning = true;
+      onExecute();
+      onComplete();
+    mIsRunning = false;
+    mStopRunning = false;
+    pTaskContext->callback();
+  }
+}
+
+void Task::execute(std::shared_ptr<TaskManager::TaskContext> pTaskContext)
+{
+  if( pTaskContext ){
+    std::shared_ptr pTask = pTaskContext->getTask();
+    if( pTask ){
+      pTask->_execute( pTaskContext );
+    }
   }
 }
 
@@ -50,16 +60,6 @@ void Task::cancel(void)
     mStopRunning = true;
   }
 }
-
-void Task::_onComplete(void)
-{
-  std::shared_ptr<TaskManager> pTaskManager = mpTaskManager.lock();
-  if( pTaskManager ){
-    mIsRunning = false;
-    pTaskManager->_onTaskCompletion( shared_from_this() );
-  }
-}
-
 
 // --- TaskManager
 TaskManager::TaskManager(int nMaxThread) : mMaxThread(nMaxThread), mStopping(false)
@@ -76,7 +76,6 @@ void TaskManager::addTask(std::shared_ptr<Task> pTask)
 {
   mMutexTasks.lock();
   {
-    pTask->setExecuter( shared_from_this() );
     mTasks.push_back(pTask);
   }
   mMutexTasks.unlock();
@@ -150,7 +149,7 @@ void TaskManager::executeAllTasks(void)
           std::erase( mTasks, pTask );
         }
         mMutexTasks.unlock();
-        mThreads.insert_or_assign( pTask, std::make_shared<std::thread>(&Task::execute, pTask) );
+        mThreads.insert_or_assign( pTask, std::make_shared<std::thread>(&Task::execute, std::make_shared<TaskManager::TaskContext>( shared_from_this(), pTask) ) );
       }
     }
     mMutexThreads.unlock();
