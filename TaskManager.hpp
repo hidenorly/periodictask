@@ -22,32 +22,31 @@
 #include <thread>
 #include <map>
 #include <memory>
+#include <functional>
 
 class TaskManager;
 
 class Task : public std::enable_shared_from_this<Task>
 {
-public:
-  std::atomic<bool> isRunning;
-  std::shared_ptr<TaskManager> mpTaskManager;
-
 protected:
+  std::atomic<bool> mIsRunning;
+  std::weak_ptr<TaskManager> mpTaskManager;
   std::atomic<bool> mStopRunning;
-
 
 public:
   Task(void);
   virtual ~Task(void);
 
   // for override
-  virtual void onExecute(void)=0;
+  virtual void onExecute(void) = 0;
   virtual void onComplete(void){};
 
   // for task manager
 public:
   static void execute(std::shared_ptr<Task> pTask);
   virtual void cancel(void);
-
+  inline bool isRunning(void){ return mIsRunning; };
+  void setExecuter(std::weak_ptr<TaskManager> pTaskManager){ mpTaskManager = pTaskManager; };
 
 protected:
   void _onComplete(void);

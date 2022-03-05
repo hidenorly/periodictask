@@ -20,7 +20,7 @@
 
 #include <iostream>
 
-Task::Task(void) : isRunning(false), mStopRunning(false)
+Task::Task(void) : mIsRunning(false), mStopRunning(false)
 {
 
 }
@@ -33,27 +33,30 @@ Task::~Task(void)
 // -- Task
 void Task::execute(std::shared_ptr<Task> pTask)
 {
-  pTask->mStopRunning = false;
-  pTask->isRunning = true;
-    pTask->onExecute();
-    pTask->onComplete();
-  pTask->isRunning = false;
-  pTask->mStopRunning = false;
-  pTask->_onComplete();
+  if( pTask ){
+    pTask->mStopRunning = false;
+    pTask->mIsRunning = true;
+      pTask->onExecute();
+      pTask->onComplete();
+    pTask->mIsRunning = false;
+    pTask->mStopRunning = false;
+    pTask->_onComplete();
+  }
 }
 
 void Task::cancel(void)
 {
-  if( isRunning ) {
+  if( mIsRunning ) {
     mStopRunning = true;
   }
 }
 
 void Task::_onComplete(void)
 {
-  if( mpTaskManager ){
-    isRunning = false;
-    mpTaskManager->_onTaskCompletion( shared_from_this() );
+  std::shared_ptr<TaskManager> pTaskManager = mpTaskManager.lock();
+  if( pTaskManager ){
+    mIsRunning = false;
+    pTaskManager->_onTaskCompletion( shared_from_this() );
   }
 }
 
@@ -73,7 +76,7 @@ void TaskManager::addTask(std::shared_ptr<Task> pTask)
 {
   mMutexTasks.lock();
   {
-    pTask->mpTaskManager = shared_from_this();
+    pTask->setExecuter( shared_from_this() );
     mTasks.push_back(pTask);
   }
   mMutexTasks.unlock();
@@ -97,9 +100,9 @@ void TaskManager::cancelTask(std::shared_ptr<Task> pTask, bool useJoin)
     }
     mMutexThreads.unlock();
 
-    if( pTask->isRunning ){
+    if( pTask->isRunning() ){
       pTask->cancel();
-      while( pTask->isRunning ){
+      while( pTask->isRunning() ){
         std::this_thread::sleep_for(std::chrono::microseconds(1000)); // 1 msec
       }
     }
@@ -118,6 +121,8 @@ void TaskManager::cancelTask(std::shared_ptr<Task> pTask, bool useJoin)
 void TaskManager::executeAllTasks(void)
 {
   mStopping = false;
+
+  // extract candidate tasks to execute
   int nNumOfRunningTasks = mThreads.size();
   if( nNumOfRunningTasks < mMaxThread ){
     // enumerate candidate task to run
@@ -125,7 +130,7 @@ void TaskManager::executeAllTasks(void)
     mMutexTasks.lock();
     {
       for( auto& pTask : mTasks ){
-        if( !pTask->isRunning ){
+        if( !pTask->isRunning() ){
           candidateTasks.push_back(pTask);
           nNumOfRunningTasks++;
           if( nNumOfRunningTasks >= mMaxThread ){
@@ -136,7 +141,7 @@ void TaskManager::executeAllTasks(void)
     }
     mMutexTasks.unlock();
 
-    // execute candidate tasks
+    // execute the extracted candidate tasks
     mMutexThreads.lock();
     {
       for( auto& pTask : candidateTasks ) {
@@ -158,9 +163,9 @@ void TaskManager::stopAllTasks(void)
   while( isRunning() ) {
     mMutexTasks.lock();
     {
-      for( auto& aTask : mTasks ) {
-        if( aTask->isRunning ){
-          aTask->cancel();
+      for( auto& pTask : mTasks ) {
+        if( pTask->isRunning() ){
+          pTask->cancel();
         }
       }
       mTasks.clear();
@@ -194,7 +199,7 @@ bool TaskManager::isRunning(void)
   mMutexTasks.lock();
   {
     for ( auto& pTask : mTasks ) {
-      bRunning |= pTask->isRunning;
+      bRunning |= pTask->isRunning();
       if (bRunning) break;
     }
   }
