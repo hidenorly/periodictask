@@ -14,8 +14,8 @@
    limitations under the License.
 */
 
-#ifndef __PERIODIC_TASK_HPP__
-#define __PERIODIC_TASK_HPP__
+#ifndef __TASK_MANAGER_HPP__
+#define __TASK_MANAGER_HPP__
 
 #include <vector>
 #include <mutex>
@@ -82,18 +82,15 @@ public:
   virtual void onComplete(void){};
 };
 
-class Task : public std::enable_shared_from_this<Task>, public ITask
+class ITaskAdministration : public std::enable_shared_from_this<Task>
 {
 protected:
   std::atomic<bool> mIsRunning;
   std::atomic<bool> mStopRunning;
 
 public:
-  Task(void);
-  virtual ~Task(void);
-
-  // for task manager
-public:
+  ITaskAdministration(void);
+  virtual ~ITaskAdministration(void);
   static void execute(std::shared_ptr<TaskManager::TaskContext> pTaskContext);
   virtual void cancel(void);
   inline bool isRunning(void){ return mIsRunning; };
@@ -102,5 +99,12 @@ protected:
   void _execute(std::shared_ptr<TaskManager::TaskContext> pTaskContext);
 };
 
+class Task : public ITask, public ITaskAdministration
+{
+public:
+  Task(void);
+  virtual ~Task(void);
+};
 
-#endif /* __PERIODIC_TASK_HPP__ */
+
+#endif /* __TASK_MANAGER_HPP__ */

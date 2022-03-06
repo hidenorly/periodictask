@@ -20,31 +20,47 @@
 
 #include <iostream>
 
-Task::Task(void) : mIsRunning(false), mStopRunning(false)
+
+Task::Task() : ITask(), ITaskAdministration()
 {
 
 }
 
-Task::~Task(void)
+Task::~Task()
+{
+
+}
+
+ITaskAdministration::ITaskAdministration(void) : mIsRunning(false), mStopRunning(false)
+{
+
+}
+
+ITaskAdministration::~ITaskAdministration(void)
 {
 
 }
 
 // -- Task
-void Task::_execute(std::shared_ptr<TaskManager::TaskContext> pTaskContext)
+void ITaskAdministration::_execute(std::shared_ptr<TaskManager::TaskContext> pTaskContext)
 {
-  if( pTaskContext && pTaskContext->getTask() == shared_from_this() ){
-    mStopRunning = false;
-    mIsRunning = true;
-      onExecute();
-      onComplete();
-    mIsRunning = false;
-    mStopRunning = false;
-    pTaskContext->callback();
+  if( pTaskContext ){
+    std::shared_ptr<ITask> pTask = std::dynamic_pointer_cast<ITask>( pTaskContext->getTask() );
+    std::shared_ptr<ITask> pTaskThis = std::dynamic_pointer_cast<ITask>( shared_from_this() );
+
+    if( pTask && pTask == pTaskThis ){
+      mStopRunning = false;
+      mIsRunning = true;
+        pTask->onExecute();
+        pTask->onComplete();
+      mIsRunning = false;
+      mStopRunning = false;
+      pTaskContext->callback();
+    }
   }
 }
 
-void Task::execute(std::shared_ptr<TaskManager::TaskContext> pTaskContext)
+void ITaskAdministration::execute(std::shared_ptr<TaskManager::TaskContext> pTaskContext)
 {
   if( pTaskContext ){
     std::shared_ptr pTask = pTaskContext->getTask();
@@ -54,7 +70,7 @@ void Task::execute(std::shared_ptr<TaskManager::TaskContext> pTaskContext)
   }
 }
 
-void Task::cancel(void)
+void ITaskAdministration::cancel(void)
 {
   if( mIsRunning ) {
     mStopRunning = true;
@@ -130,7 +146,7 @@ void TaskManager::executeAllTasks(void)
     {
       for( auto& pTask : mTasks ){
         if( !pTask->isRunning() ){
-          candidateTasks.push_back(pTask);
+          candidateTasks.push_back( pTask );
           nNumOfRunningTasks++;
           if( nNumOfRunningTasks >= mMaxThread ){
             break;
