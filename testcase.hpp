@@ -28,6 +28,7 @@ protected:
   virtual void TearDown();
 
   void testTaskManager(void);
+  void testPeridocTask(void);
 };
 
 #endif /* __TESTCASE_TASKMAN_HPP__ */

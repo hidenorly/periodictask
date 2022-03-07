@@ -26,20 +26,36 @@
 
 class Task;
 
-class TaskManager : public std::enable_shared_from_this<TaskManager>
+class ITaskManager
+{
+public:
+  virtual void addTask(std::shared_ptr<Task> pTask) = 0;
+  virtual void cancelTask(std::shared_ptr<Task> pTask, bool useJoin) = 0;
+  virtual void cancelTask(std::shared_ptr<Task> pTask) = 0;
+
+  virtual void executeAllTasks(void) = 0;
+  virtual void stopAllTasks(void) = 0;
+  virtual bool isRunning(void) = 0;
+  virtual bool isRemainingTasks(void) = 0;
+  virtual void finalize(void) = 0;
+};
+
+class TaskManager : public ITaskManager, public std::enable_shared_from_this<TaskManager>
 {
 public:
   TaskManager(int nMaxThread = 4);
   virtual ~TaskManager();
 
 public:
-  void addTask(std::shared_ptr<Task> pTask);
-  void cancelTask(std::shared_ptr<Task> pTask, bool useJoin = false);
-  void executeAllTasks(void);
-  void stopAllTasks(void);
-  bool isRunning(void);
-  bool isRemainingTasks(void);
-  void finalize(void);
+  virtual void addTask(std::shared_ptr<Task> pTask);
+  virtual void cancelTask(std::shared_ptr<Task> pTask, bool useJoin);
+  virtual void cancelTask(std::shared_ptr<Task> pTask){ cancelTask( pTask, false ); };
+
+  virtual void executeAllTasks(void);
+  virtual void stopAllTasks(void);
+  virtual bool isRunning(void);
+  virtual bool isRemainingTasks(void);
+  virtual void finalize(void);
 
   // for task
 public:

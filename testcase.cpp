@@ -17,6 +17,7 @@
 #include <gtest/gtest.h>
 #include "testcase.hpp"
 #include "TaskManager.hpp"
+#include "PeriodicTask.hpp"
 #include <iostream>
 #include <chrono>
 
@@ -36,26 +37,27 @@ void TestCase_TaskManager::TearDown()
 {
 }
 
+class MyTask : public Task
+{
+protected:
+  int mId;
+public:
+  MyTask( int nId ) : mId(nId){};
+  virtual void onExecute(void)
+  {
+    std::cout << "MyTask(" << std::to_string( mId ) << ") is running..." << std::endl;
+    for(int i=0; i<1000; i++){
+      [[maybe_unused]] volatile int j = i * i;
+      if ( mStopRunning ) break;
+      std::this_thread::sleep_for(std::chrono::microseconds(100));
+    }
+    std::cout << "MyTask(" << std::to_string( mId ) << ") is finished." << std::endl;
+  }
+};
+
+
 TEST_F(TestCase_TaskManager, testTaskManager)
 {
-  class MyTask : public Task
-  {
-  protected:
-    int mId;
-  public:
-    MyTask( int nId ) : mId(nId){};
-    virtual void onExecute(void)
-    {
-      std::cout << "MyTask(" << std::to_string( mId ) << ") is running..." << std::endl;
-      for(int i=0; i<1000; i++){
-        [[maybe_unused]] volatile int j = i * i;
-        if ( mStopRunning ) break;
-        std::this_thread::sleep_for(std::chrono::microseconds(100));
-      }
-      std::cout << "MyTask(" << std::to_string( mId ) << ") is finished." << std::endl;
-    }
-  };
-
   std::cout << "Hello, World!" << std::endl;
 
   std::shared_ptr<TaskManager> pTaskMan = std::make_shared<TaskManager>();
@@ -70,8 +72,30 @@ TEST_F(TestCase_TaskManager, testTaskManager)
   std::cout << "executeAllTasks()" << std::endl;
   pTaskMan->executeAllTasks();
 
-  std::this_thread::sleep_for(std::chrono::microseconds(1000*1000*10)); // 5sec
+  std::this_thread::sleep_for(std::chrono::microseconds(1000*1000*5)); // 5sec
 
+  std::cout << "stopAllTasks()" << std::endl;
+  pTaskMan->stopAllTasks();
+
+  std::cout << "finalize()" << std::endl;
+  pTaskMan->finalize();
+}
+
+TEST_F(TestCase_TaskManager, testPeridocTask)
+{
+  std::shared_ptr<PeriodicTask> pPeriodicTask = std::make_shared<PeriodicTask>(1000);
+  int i = 0;
+  pPeriodicTask->addTask( std::make_shared<MyTask>( i++ ) );
+  pPeriodicTask->addTask( std::make_shared<MyTask>( i++ ) );
+  pPeriodicTask->addTask( std::make_shared<MyTask>( i++ ) );
+
+  std::shared_ptr<TaskManager> pTaskMan = std::make_shared<TaskManager>();
+  pTaskMan->addTask( pPeriodicTask );
+
+  std::cout << "executeAllTasks()" << std::endl;
+  pTaskMan->executeAllTasks();
+
+  std::this_thread::sleep_for(std::chrono::microseconds(1000*1000*5)); // 5sec
   std::cout << "stopAllTasks()" << std::endl;
   pTaskMan->stopAllTasks();
 
