@@ -45,13 +45,17 @@ public:
   MyTask( int nId ) : mId(nId){};
   virtual void onExecute(void)
   {
+    std::chrono::high_resolution_clock::time_point startTime = std::chrono::high_resolution_clock::now();
     std::cout << "MyTask(" << std::to_string( mId ) << ") is running..." << std::endl;
     for(int i=0; i<1000; i++){
       [[maybe_unused]] volatile int j = i * i;
       if ( mStopRunning ) break;
       std::this_thread::sleep_for(std::chrono::microseconds(100));
     }
-    std::cout << "MyTask(" << std::to_string( mId ) << ") is finished." << std::endl;
+    std::chrono::high_resolution_clock::time_point endTime = std::chrono::high_resolution_clock::now();
+    std::chrono::milliseconds duration = std::chrono::duration_cast<std::chrono::milliseconds>( endTime - startTime );
+
+    std::cout << "MyTask(" << std::to_string( mId ) << ") is finished (" << std::to_string( duration.count() ) << "msec)." << std::endl;
   }
 };
 

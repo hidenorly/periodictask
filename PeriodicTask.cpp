@@ -15,6 +15,7 @@
 */
 
 #include "PeriodicTask.hpp"
+#include <iostream>
 
 void PeriodicTask::addTask(std::shared_ptr<Task> pTask)
 {
@@ -32,13 +33,24 @@ void PeriodicTask::cancelTask(std::shared_ptr<Task> pTask)
 
 void PeriodicTask::onExecute(void)
 {
+  std::chrono::high_resolution_clock::time_point lastTime = std::chrono::high_resolution_clock::now();
+
   while( mIsRunning && !mStopRunning ){
-    // TODO: Adjust the next periodic with the actual execution time
-    std::this_thread::sleep_for(std::chrono::milliseconds( mPeriodicMsec ));
+    // Adjust the next periodic with the actual execution time
+    std::chrono::milliseconds duration = std::chrono::duration_cast<std::chrono::milliseconds>( std::chrono::high_resolution_clock::now() - lastTime );
+    std::chrono::milliseconds delayMsec = std::chrono::milliseconds( mPeriodicMsec ) - duration;
+    if( delayMsec.count() < 0 ){
+      delayMsec = std::chrono::milliseconds( 0 );
+      std::cout << "warning: execution time is exceeded than the periodic duration" << std::endl;
+    }
+    std::this_thread::sleep_for( delayMsec );
+
+    lastTime = std::chrono::high_resolution_clock::now();
     mMutexTasks.lock();
       for( auto& pTask : mTasks ){
         pTask->onExecute();
       }
     mMutexTasks.unlock();
+
   }
 }
