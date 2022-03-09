@@ -18,6 +18,7 @@
 #include "testcase.hpp"
 #include "TaskManager.hpp"
 #include "PeriodicTask.hpp"
+#include "ThreadPool.hpp"
 #include <iostream>
 #include <chrono>
 
@@ -85,6 +86,38 @@ TEST_F(TestCase_TaskManager, testTaskManager)
   pTaskMan->finalize();
 }
 
+
+TEST_F(TestCase_TaskManager, testThreadPool)
+{
+  std::cout << "instantiate ThreadPool" << std::endl;
+  std::shared_ptr<ThreadPool> pThreadPool = std::make_shared<ThreadPool>( );
+
+  std::cout << "adding tasks" << std::endl;
+  int i = 0;
+  pThreadPool->addTask( std::make_shared<MyTask>( i++ ) );
+  pThreadPool->addTask( std::make_shared<MyTask>( i++ ) );
+  pThreadPool->addTask( std::make_shared<MyTask>( i++ ) );
+  pThreadPool->addTask( std::make_shared<MyTask>( i++ ) );
+  pThreadPool->addTask( std::make_shared<MyTask>( i++ ) );
+
+  std::cout << "execute thread pool" << std::endl;
+  pThreadPool->execute();
+
+  std::cout << "wait the execution" << std::endl;
+  std::this_thread::sleep_for(std::chrono::microseconds(1000*1000*2)); // 2sec
+
+  std::cout << "adding tasks" << std::endl;
+  pThreadPool->addTask( std::make_shared<MyTask>( i++ ) );
+  pThreadPool->addTask( std::make_shared<MyTask>( i++ ) );
+
+  std::cout << "wait the execution" << std::endl;
+  std::this_thread::sleep_for(std::chrono::microseconds(1000*1000*3)); // 3sec
+
+  std::cout << "finalize()" << std::endl;
+  pThreadPool->terminate();
+}
+
+
 TEST_F(TestCase_TaskManager, testPeridocTask)
 {
   std::shared_ptr<PeriodicTask> pPeriodicTask = std::make_shared<PeriodicTask>(1000);
@@ -106,6 +139,7 @@ TEST_F(TestCase_TaskManager, testPeridocTask)
   std::cout << "finalize()" << std::endl;
   pTaskMan->finalize();
 }
+
 
 int main(int argc, char **argv)
 {
