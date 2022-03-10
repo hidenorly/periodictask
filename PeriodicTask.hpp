@@ -18,6 +18,7 @@
 #define __PERIODIC_TASK_HPP__
 
 #include "TaskManager.hpp"
+#include "ThreadPool.hpp"
 
 #include <vector>
 #include <mutex>
@@ -27,6 +28,8 @@ class IPeriodicTaskManager
 public:
   virtual void scheduleRepeat(std::shared_ptr<Task> pTask, int nPeriodMSec) = 0;
   virtual void cancelScheduleRepeat(std::shared_ptr<Task> pTask) = 0;
+  virtual void execute(void) = 0;
+  virtual void terminate(void) = 0;
 };
 
 class PeriodicTask : public Task
@@ -45,6 +48,42 @@ public:
   virtual void cancelTask(std::shared_ptr<Task> pTask);
 
   virtual void onExecute(void);
+  virtual void cancel(void);
+};
+
+
+class PeriodicTaskPool : public ThreadPool::TaskPool
+{
+protected:
+  int mPeriodicMsec;
+
+public:
+  PeriodicTaskPool(int nPeriodMSec);
+  virtual ~PeriodicTaskPool();
+  virtual void enqueue(std::shared_ptr<ITask> pTask);
+  virtual std::shared_ptr<ITask> dequeue(void);
+  virtual void erase(std::shared_ptr<ITask> pTask);
+  virtual void clear(void);
+
+protected:
+  std::shared_ptr<PeriodicTask> getPeriodicTask(void);
+};
+
+class PeriodicTaskManager : public IPeriodicTaskManager
+{
+protected:
+  std::map<int, std::shared_ptr<ThreadPool::ThreadExector>> mThreads;
+  std::map<int, std::shared_ptr<ThreadPool::TaskPool>> mTaskPool;
+
+public:
+  PeriodicTaskManager();
+  virtual ~PeriodicTaskManager();
+
+  virtual void scheduleRepeat(std::shared_ptr<Task> pTask, int nPeriodMSec);
+  virtual void cancelScheduleRepeat(std::shared_ptr<Task> pTask);
+
+  virtual void execute(void);
+  virtual void terminate(void);
 };
 
 #endif /* __PERIODIC_TASK_HPP__ */
