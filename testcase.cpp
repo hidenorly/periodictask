@@ -60,7 +60,6 @@ public:
   }
 };
 
-
 TEST_F(TestCase_TaskManager, testTaskManager)
 {
   std::cout << "Hello, World!" << std::endl;
@@ -93,7 +92,7 @@ TEST_F(TestCase_TaskManager, testThreadPool)
   std::shared_ptr<ThreadPool> pThreadPool = std::make_shared<ThreadPool>( );
 
   std::cout << "adding tasks" << std::endl;
-  int i = 0;
+  int i = 100;
   pThreadPool->addTask( std::make_shared<MyTask>( i++ ) );
   pThreadPool->addTask( std::make_shared<MyTask>( i++ ) );
   pThreadPool->addTask( std::make_shared<MyTask>( i++ ) );
@@ -113,15 +112,15 @@ TEST_F(TestCase_TaskManager, testThreadPool)
   std::cout << "wait the execution" << std::endl;
   std::this_thread::sleep_for(std::chrono::microseconds(1000*1000*3)); // 3sec
 
-  std::cout << "finalize()" << std::endl;
+  std::cout << "terminate()" << std::endl;
   pThreadPool->terminate();
 }
 
-
+#if 0
 TEST_F(TestCase_TaskManager, testPeridocTask)
 {
   std::shared_ptr<PeriodicTask> pPeriodicTask = std::make_shared<PeriodicTask>(1000);
-  int i = 0;
+  int i = 200;
   pPeriodicTask->addTask( std::make_shared<MyTask>( i++ ) );
   pPeriodicTask->addTask( std::make_shared<MyTask>( i++ ) );
   pPeriodicTask->addTask( std::make_shared<MyTask>( i++ ) );
@@ -138,6 +137,24 @@ TEST_F(TestCase_TaskManager, testPeridocTask)
 
   std::cout << "finalize()" << std::endl;
   pTaskMan->finalize();
+}
+#endif
+
+TEST_F(TestCase_TaskManager, testPeridocTaskManager)
+{
+  std::shared_ptr<PeriodicTaskManager> pTaskMan = std::make_shared<PeriodicTaskManager>();
+  int i = 300;
+  pTaskMan->scheduleRepeat( std::make_shared<MyTask>( i++ ), 1000 );
+  pTaskMan->scheduleRepeat( std::make_shared<MyTask>( i++ ), 1000 );
+  pTaskMan->scheduleRepeat( std::make_shared<MyTask>( i++ ), 200 );
+
+  std::cout << "execute()" << std::endl;
+  pTaskMan->execute();
+
+  std::this_thread::sleep_for(std::chrono::microseconds(1000*1000*5)); // 3sec
+
+  std::cout << "terminate()" << std::endl;
+  pTaskMan->terminate();
 }
 
 

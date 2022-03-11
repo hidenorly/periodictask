@@ -29,6 +29,8 @@ protected:
 
   void testTaskManager(void);
   void testPeridocTask(void);
+  void testThreadPool(void);
+  void testPeridocTaskManager(void);
 };
 
 #endif /* __TESTCASE_TASKMAN_HPP__ */

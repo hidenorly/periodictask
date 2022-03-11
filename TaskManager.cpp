@@ -16,68 +16,12 @@
 
 
 #include "TaskManager.hpp"
+#include "Task.hpp"
 #include <chrono>
 
 #include <iostream>
 
 
-Task::Task() : ITask(), ITaskAdministration()
-{
-
-}
-
-Task::~Task()
-{
-
-}
-
-ITaskAdministration::ITaskAdministration(void) : mIsRunning(false), mStopRunning(false)
-{
-
-}
-
-ITaskAdministration::~ITaskAdministration(void)
-{
-
-}
-
-// -- Task
-void ITaskAdministration::_execute(std::shared_ptr<TaskManager::TaskContext> pTaskContext)
-{
-  if( pTaskContext ){
-    std::shared_ptr<ITask> pTask = std::dynamic_pointer_cast<ITask>( pTaskContext->getTask() );
-    std::shared_ptr<ITask> pTaskThis = std::dynamic_pointer_cast<ITask>( shared_from_this() );
-
-    if( pTask && pTask == pTaskThis ){
-      mStopRunning = false;
-      mIsRunning = true;
-        pTask->onExecute();
-        pTask->onComplete();
-      mIsRunning = false;
-      mStopRunning = false;
-      pTaskContext->callback();
-    }
-  }
-}
-
-void ITaskAdministration::execute(std::shared_ptr<TaskManager::TaskContext> pTaskContext)
-{
-  if( pTaskContext ){
-    std::shared_ptr pTask = pTaskContext->getTask();
-    if( pTask ){
-      pTask->_execute( pTaskContext );
-    }
-  }
-}
-
-void ITaskAdministration::cancel(void)
-{
-  if( mIsRunning ) {
-    mStopRunning = true;
-  }
-}
-
-// --- TaskManager
 TaskManager::TaskManager(int nMaxThread) : mMaxThread(nMaxThread), mStopping(false)
 {
 
@@ -165,7 +109,7 @@ void TaskManager::executeAllTasks(void)
           std::erase( mTasks, pTask );
         }
         mMutexTasks.unlock();
-        mThreads.insert_or_assign( pTask, std::make_shared<std::thread>(&Task::execute, std::make_shared<TaskManager::TaskContext>( shared_from_this(), pTask) ) );
+        mThreads.insert_or_assign( pTask, std::make_shared<std::thread>(&Task::executeThreadFunc, std::make_shared<TaskManager::TaskContext>( shared_from_this(), pTask) ) );
       }
     }
     mMutexThreads.unlock();
@@ -183,19 +127,27 @@ void TaskManager::stopAllTasks(void)
           pTask->cancel();
         }
       }
-      mTasks.clear();
     }
     mMutexTasks.unlock();
     mMutexThreads.lock();
+    {
+      std::vector<std::shared_ptr<Task>> tasks;
       for(auto& [pTask, pThread] : mThreads ){
         if( pThread->joinable() ){
           pThread->join();
+          tasks.push_back( pTask );
         }
       }
-      mThreads.clear();
+      for( auto& pTask : tasks ){
+        mThreads.erase( pTask );
+        std::erase( mTasks, pTask );
+      }
+    }
     mMutexThreads.unlock();
-    std::this_thread::sleep_for(std::chrono::microseconds(1000)); // 1 msec
+    std::this_thread::yield();
   }
+  mTasks.clear();
+  mThreads.clear();
 }
 
 void TaskManager::_onTaskCompletion(std::shared_ptr<Task> pTask)

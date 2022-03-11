@@ -21,7 +21,7 @@
 #include <mutex>
 #include <thread>
 
-#include "TaskManager.hpp"
+#include "Task.hpp"
 
 class ThreadPool
 {

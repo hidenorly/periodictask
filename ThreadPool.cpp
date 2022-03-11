@@ -80,11 +80,18 @@ void ThreadPool::ThreadExector::terminate(void)
 {
   if( mThread ){
     mStopping = true;
+    if( mCurrentRunningTask ){
+      std::shared_ptr<Task> pFullTask = std::dynamic_pointer_cast<Task>( mCurrentRunningTask );
+      if( pFullTask ){
+        pFullTask->cancel();
+      }
+    }
     if( mThread->joinable() ){
       mThread->join();
     }
     mStopping = false;
   }
+  mCurrentRunningTask.reset();
   mTaskPool.reset();
   mThread.reset();
 }
@@ -101,9 +108,14 @@ void ThreadPool::ThreadExector::onExecute(void)
   while( !mStopping && mTaskPool ){
     mCurrentRunningTask = mTaskPool->dequeue();
     if( mCurrentRunningTask ){
-      mCurrentRunningTask->onExecute();
-      mCurrentRunningTask->onComplete();
-      mCurrentRunningTask.reset();
+      std::shared_ptr<Task> pFullTask = std::dynamic_pointer_cast<Task>( mCurrentRunningTask );
+      if( pFullTask ){
+        pFullTask->execute();
+      } else {
+        mCurrentRunningTask->onExecute();
+        mCurrentRunningTask->onComplete();
+        mCurrentRunningTask.reset();
+      }
     } else {
       std::this_thread::yield();
     }

@@ -17,7 +17,7 @@
 #ifndef __PERIODIC_TASK_HPP__
 #define __PERIODIC_TASK_HPP__
 
-#include "TaskManager.hpp"
+#include "Task.hpp"
 #include "ThreadPool.hpp"
 
 #include <vector>

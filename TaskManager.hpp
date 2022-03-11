@@ -22,7 +22,6 @@
 #include <thread>
 #include <map>
 #include <memory>
-#include <functional>
 
 class Task;
 
@@ -89,38 +88,5 @@ public:
     }
   };
 };
-
-
-class ITask
-{
-public:
-  virtual void onExecute(void) = 0;
-  virtual void onComplete(void){};
-};
-
-class ITaskAdministration : public std::enable_shared_from_this<Task>
-{
-protected:
-  std::atomic<bool> mIsRunning;
-  std::atomic<bool> mStopRunning;
-
-public:
-  ITaskAdministration(void);
-  virtual ~ITaskAdministration(void);
-  static void execute(std::shared_ptr<TaskManager::TaskContext> pTaskContext);
-  virtual void cancel(void);
-  inline bool isRunning(void){ return mIsRunning; };
-
-protected:
-  void _execute(std::shared_ptr<TaskManager::TaskContext> pTaskContext);
-};
-
-class Task : public ITask, public ITaskAdministration
-{
-public:
-  Task(void);
-  virtual ~Task(void);
-};
-
 
 #endif /* __TASK_MANAGER_HPP__ */
