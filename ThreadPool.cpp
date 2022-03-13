@@ -125,7 +125,10 @@ void ThreadPool::ThreadExector::onExecute(void)
 void ThreadPool::ThreadExector::cancelTaskIfRunning(std::shared_ptr<ITask> pTask)
 {
   if( mCurrentRunningTask == pTask ){
-    // TODO: cancel the task
+    std::shared_ptr<Task> pFullTask = std::dynamic_pointer_cast<Task>( mCurrentRunningTask );
+    if( pFullTask ){
+      pFullTask->cancel();
+    }
   }
 }
 
