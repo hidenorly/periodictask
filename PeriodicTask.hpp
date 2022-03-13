@@ -22,6 +22,7 @@
 
 #include <vector>
 #include <mutex>
+#include <map>
 
 class IPeriodicTaskManager
 {

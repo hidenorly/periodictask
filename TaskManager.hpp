@@ -23,7 +23,7 @@
 #include <map>
 #include <memory>
 
-class Task;
+#include "Task.hpp"
 
 class ITaskManager
 {
@@ -39,7 +39,7 @@ public:
   virtual void finalize(void) = 0;
 };
 
-class TaskManager : public ITaskManager, public std::enable_shared_from_this<TaskManager>
+class TaskManager : public ITaskManager, public Task::ITaskNotifier, public std::enable_shared_from_this<TaskManager>
 {
 public:
   TaskManager(int nMaxThread = 4);
@@ -58,7 +58,7 @@ public:
 
   // for task
 public:
-  void _onTaskCompletion(std::shared_ptr<Task> pTask);
+  virtual void onTaskCompletion(std::shared_ptr<ITask> pTask);
 
 protected:
   int mMaxThread;
@@ -68,25 +68,6 @@ protected:
   std::map<std::shared_ptr<Task>, std::shared_ptr<std::thread>> mThreads;
   std::mutex mMutexTasks;
   std::mutex mMutexThreads;
-
-public:
-  class TaskContext
-  {
-  protected:
-    std::shared_ptr<TaskManager> mTaskManager;
-    std::shared_ptr<Task> mTask;
-  public:
-    TaskContext(std::shared_ptr<TaskManager> pTaskManager, std::shared_ptr<Task> pTask) : mTaskManager(pTaskManager), mTask(pTask){};
-    virtual ~TaskContext(){};
-
-    std::shared_ptr<Task> getTask(void){ return mTask; };
-
-    void callback(void){
-      if( mTaskManager ){
-        mTaskManager->_onTaskCompletion( mTask );
-      }
-    }
-  };
 };
 
 #endif /* __TASK_MANAGER_HPP__ */

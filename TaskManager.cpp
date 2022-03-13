@@ -109,7 +109,7 @@ void TaskManager::executeAllTasks(void)
           std::erase( mTasks, pTask );
         }
         mMutexTasks.unlock();
-        mThreads.insert_or_assign( pTask, std::make_shared<std::thread>(&Task::executeThreadFunc, std::make_shared<TaskManager::TaskContext>( shared_from_this(), pTask) ) );
+        mThreads.insert_or_assign( pTask, std::make_shared<std::thread>( &Task::executeThreadFunc, pTask, shared_from_this() ) );
       }
     }
     mMutexThreads.unlock();
@@ -150,10 +150,10 @@ void TaskManager::stopAllTasks(void)
   mThreads.clear();
 }
 
-void TaskManager::_onTaskCompletion(std::shared_ptr<Task> pTask)
+void TaskManager::onTaskCompletion(std::shared_ptr<ITask> pTask)
 {
   if( pTask ) {
-    cancelTask( pTask );
+    cancelTask( std::dynamic_pointer_cast<Task>( pTask ) );
     if( !mStopping ) {
       executeAllTasks();
     }

@@ -18,7 +18,7 @@
 #include "Task.hpp"
 
 
-Task::Task() : ITask(), ITaskAdministration()
+Task::Task() : ITask(), mIsRunning(false), mStopRunning(false)
 {
 
 }
@@ -28,31 +28,16 @@ Task::~Task()
 
 }
 
-ITaskAdministration::ITaskAdministration(void) : mIsRunning(false), mStopRunning(false)
-{
-
-}
-
-ITaskAdministration::~ITaskAdministration(void)
-{
-
-}
-
 // -- Task
-void ITaskAdministration::_execute(std::shared_ptr<TaskManager::TaskContext> pTaskContext)
+void Task::_execute(std::shared_ptr<Task::ITaskNotifier> pNotifier)
 {
-  if( pTaskContext ){
-    std::shared_ptr<ITask> pTask = std::dynamic_pointer_cast<ITask>( pTaskContext->getTask() );
-    std::shared_ptr<ITask> pTaskThis = std::dynamic_pointer_cast<ITask>( shared_from_this() );
-
-    if( pTask && pTask == pTaskThis ){
-      execute();
-      pTaskContext->callback();
-    }
+  execute();
+  if( pNotifier ){
+    pNotifier->onTaskCompletion( std::dynamic_pointer_cast<ITask>( shared_from_this() ) );
   }
 }
 
-void ITaskAdministration::execute(void)
+void Task::execute(void)
 {
   mStopRunning = false;
   mIsRunning = true;
@@ -65,17 +50,15 @@ void ITaskAdministration::execute(void)
   mStopRunning = false;
 }
 
-void ITaskAdministration::executeThreadFunc(std::shared_ptr<TaskManager::TaskContext> pTaskContext)
+void Task::executeThreadFunc(std::shared_ptr<ITask> pTask, std::shared_ptr<Task::ITaskNotifier> pNotifier)
 {
-  if( pTaskContext ){
-    std::shared_ptr pTask = pTaskContext->getTask();
-    if( pTask ){
-      pTask->_execute( pTaskContext );
-    }
+  std::shared_ptr<Task> pTaskAdmin = std::dynamic_pointer_cast<Task>( pTask );
+  if( pTaskAdmin ){
+    pTaskAdmin->_execute( pNotifier );
   }
 }
 
-void ITaskAdministration::cancel(void)
+void Task::cancel(void)
 {
   if( mIsRunning ) {
     mStopRunning = true;
