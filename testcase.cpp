@@ -19,6 +19,7 @@
 #include "TaskManager.hpp"
 #include "PeriodicTask.hpp"
 #include "ThreadPool.hpp"
+#include "LambdaTask.hpp"
 #include <iostream>
 #include <chrono>
 
@@ -155,6 +156,50 @@ TEST_F(TestCase_TaskManager, testPeridocTaskManager)
 
   std::cout << "terminate()" << std::endl;
   pTaskMan->terminate();
+}
+
+
+TEST_F(TestCase_TaskManager, testLambdaTask)
+{
+  std::cout << "instantiate ThreadPool" << std::endl;
+  std::shared_ptr<ThreadPool> pThreadPool = std::make_shared<ThreadPool>( );
+
+  std::cout << "adding tasks" << std::endl;
+
+  TASK_LAMBDA task = [](std::shared_ptr<Task> pTask){
+    std::chrono::high_resolution_clock::time_point startTime = std::chrono::high_resolution_clock::now();
+    std::cout << "lambdaTask is running..." << std::endl;
+    for(int i=0; i<1000; i++){
+      [[maybe_unused]] volatile int j = i * i;
+      std::this_thread::sleep_for(std::chrono::microseconds(100));
+    }
+    std::chrono::high_resolution_clock::time_point endTime = std::chrono::high_resolution_clock::now();
+    std::chrono::milliseconds duration = std::chrono::duration_cast<std::chrono::milliseconds>( endTime - startTime );
+
+    std::cout << "lamndatask is finished (" << std::to_string( duration.count() ) << "msec)." << std::endl;
+  };
+
+  pThreadPool->addTask( std::make_shared<LambdaTask>( task ) );
+  pThreadPool->addTask( std::make_shared<LambdaTask>( task ) );
+  pThreadPool->addTask( std::make_shared<LambdaTask>( task ) );
+  pThreadPool->addTask( std::make_shared<LambdaTask>( task ) );
+  pThreadPool->addTask( std::make_shared<LambdaTask>( task ) );
+
+  std::cout << "execute thread pool" << std::endl;
+  pThreadPool->execute();
+
+  std::cout << "wait the execution" << std::endl;
+  std::this_thread::sleep_for(std::chrono::microseconds(1000*1000*2)); // 2sec
+
+  std::cout << "adding tasks" << std::endl;
+  pThreadPool->addTask( std::make_shared<LambdaTask>( task ) );
+  pThreadPool->addTask( std::make_shared<LambdaTask>( task ) );
+
+  std::cout << "wait the execution" << std::endl;
+  std::this_thread::sleep_for(std::chrono::microseconds(1000*1000*3)); // 3sec
+
+  std::cout << "terminate()" << std::endl;
+  pThreadPool->terminate();
 }
 
 

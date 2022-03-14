@@ -14,24 +14,19 @@
    limitations under the License.
 */
 
-#ifndef __TESTCASE_TASKMAN_HPP__
-#define __TESTCASE_TASKMAN_HPP__
+#include "LambdaTask.hpp"
 
-#include <gtest/gtest.h>
-
-class TestCase_TaskManager : public ::testing::Test
+LambdaTask::LambdaTask(TASK_LAMBDA lambda) : Task(), mLambdaFunc( lambda )
 {
-protected:
-  TestCase_TaskManager();
-  virtual ~TestCase_TaskManager();
-  virtual void SetUp();
-  virtual void TearDown();
 
-  void testTaskManager(void);
-  void testPeridocTask(void);
-  void testThreadPool(void);
-  void testPeridocTaskManager(void);
-  void testLambdaTask(void);
-};
+}
 
-#endif /* __TESTCASE_TASKMAN_HPP__ */
+LambdaTask::~LambdaTask(void)
+{
+
+}
+
+void LambdaTask::onExecute(void)
+{
+  mLambdaFunc( shared_from_this() );
+}
