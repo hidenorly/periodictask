@@ -39,6 +39,7 @@ public:
     virtual std::shared_ptr<ITask> dequeue(void);
     virtual void erase(std::shared_ptr<ITask> pTask);
     virtual void clear(void);
+    virtual bool isEmpty(void);
   };
 
   class ThreadExector : public std::enable_shared_from_this<ThreadExector>

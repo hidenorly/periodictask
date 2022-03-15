@@ -149,27 +149,53 @@ PeriodicTaskManager::~PeriodicTaskManager()
 
 }
 
+bool PeriodicTaskManager::isEmpty(int nPeriodMSec)
+{
+  bool result = true;
+
+  if( mTaskPool.contains( nPeriodMSec ) ){
+    result = mTaskPool[nPeriodMSec]->isEmpty();
+  }
+
+  return result;
+}
+
+
 void PeriodicTaskManager::scheduleRepeat(std::shared_ptr<Task> pTask, int nPeriodMSec)
 {
-  if( !mTaskPool.contains( nPeriodMSec ) ){
-    std::shared_ptr<ThreadPool::TaskPool> pTaskPool = std::make_shared<PeriodicTaskPool>( nPeriodMSec );
-    mTaskPool.insert_or_assign( nPeriodMSec, pTaskPool );
-    mThreads.insert_or_assign( nPeriodMSec, std::make_shared<ThreadPool::ThreadExector>( pTaskPool ) );
-  }
-  std::shared_ptr<ThreadPool::TaskPool> pTaskPool = mTaskPool[ nPeriodMSec ];
-  if( pTaskPool ){
-    pTaskPool->enqueue( pTask );
-  }
+  mMutex.lock();
+    if( !mTaskPool.contains( nPeriodMSec ) ){
+      std::shared_ptr<ThreadPool::TaskPool> pTaskPool = std::make_shared<PeriodicTaskPool>( nPeriodMSec );
+      mTaskPool.insert_or_assign( nPeriodMSec, pTaskPool );
+      mThreads.insert_or_assign( nPeriodMSec, std::make_shared<ThreadPool::ThreadExector>( pTaskPool ) );
+    }
+    std::shared_ptr<ThreadPool::TaskPool> pTaskPool = mTaskPool[ nPeriodMSec ];
+    if( pTaskPool ){
+      pTaskPool->enqueue( pTask );
+    }
+  mMutex.unlock();
 }
 
 void PeriodicTaskManager::cancelScheduleRepeat(std::shared_ptr<Task> pTask)
 {
-  for( auto& [ nPeriodMSec, pTaskPool] : mTaskPool ){
-    if( pTaskPool ){
-      pTaskPool->erase( pTask );
-      // TODO: remove the nPeriod's TaskPool and the ThreadExecuter if task is empty.
+  mMutex.lock();
+    std::vector<int> emptyPeriods;
+
+    for( auto& [ nPeriodMSec, pTaskPool] : mTaskPool ){
+      if( pTaskPool ){
+        pTaskPool->erase( pTask );
+        if( isEmpty( nPeriodMSec ) ){
+          emptyPeriods.push_back( nPeriodMSec );
+        }
+      }
     }
-  }
+
+    for( auto& nPeriodMSec : emptyPeriods ){
+      mTaskPool.erase( nPeriodMSec );
+      mThreads[nPeriodMSec]->terminate();
+      mThreads.erase( nPeriodMSec );
+    }
+  mMutex.unlock();
 }
 
 void PeriodicTaskManager::execute(void)

@@ -75,6 +75,10 @@ class PeriodicTaskManager : public IPeriodicTaskManager
 protected:
   std::map<int, std::shared_ptr<ThreadPool::ThreadExector>> mThreads;
   std::map<int, std::shared_ptr<ThreadPool::TaskPool>> mTaskPool;
+  std::mutex mMutex;
+
+protected:
+  bool isEmpty(int nPeriodMSec);
 
 public:
   PeriodicTaskManager();

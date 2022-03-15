@@ -31,6 +31,7 @@ protected:
   void testPeridocTask(void);
   void testThreadPool(void);
   void testPeridocTaskManager(void);
+  void testPeridocTaskManagerCancel(void);
   void testLambdaTask(void);
 };
 

@@ -59,6 +59,11 @@ void ThreadPool::TaskPool::clear(void)
   mTaskMutex.unlock();
 }
 
+bool ThreadPool::TaskPool::isEmpty(void)
+{
+  return mTasks.empty();
+}
+
 
 ThreadPool::ThreadExector::ThreadExector(std::shared_ptr<TaskPool> pTaskPool) : mTaskPool( pTaskPool ), mStopping( false )
 {

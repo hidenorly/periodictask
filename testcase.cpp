@@ -159,6 +159,33 @@ TEST_F(TestCase_TaskManager, testPeridocTaskManager)
 }
 
 
+TEST_F(TestCase_TaskManager, testPeridocTaskManagerCancel)
+{
+  std::shared_ptr<PeriodicTaskManager> pTaskMan = std::make_shared<PeriodicTaskManager>();
+  int i = 400;
+
+  std::shared_ptr<MyTask> pTask1000_1 = std::make_shared<MyTask>( i++ );
+  std::shared_ptr<MyTask> pTask1000_2 = std::make_shared<MyTask>( i++ );
+  std::shared_ptr<MyTask> pTask200_1 = std::make_shared<MyTask>( i++ );
+
+  pTaskMan->scheduleRepeat( pTask1000_1, 1000 );
+  pTaskMan->scheduleRepeat( pTask1000_2, 1000 );
+  pTaskMan->scheduleRepeat( pTask200_1, 200 );
+
+  std::cout << "execute()" << std::endl;
+  pTaskMan->execute();
+
+  std::this_thread::sleep_for(std::chrono::microseconds(1000*1000*2)); // 2sec
+
+  pTaskMan->cancelScheduleRepeat( pTask200_1 );
+
+  std::this_thread::sleep_for(std::chrono::microseconds(1000*1000*3)); // 3sec
+
+  std::cout << "terminate()" << std::endl;
+  pTaskMan->terminate();
+}
+
+
 TEST_F(TestCase_TaskManager, testLambdaTask)
 {
   std::cout << "instantiate ThreadPool" << std::endl;
