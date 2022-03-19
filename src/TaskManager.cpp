@@ -119,34 +119,29 @@ void TaskManager::executeAllTasks(void)
 void TaskManager::stopAllTasks(void)
 {
   mStopping = true;
+
+  mTasks.clear();
+
   while( isRunning() ) {
-    mMutexTasks.lock();
-    {
-      for( auto& pTask : mTasks ) {
-        if( pTask->isRunning() ){
-          pTask->cancel();
-        }
-      }
-    }
-    mMutexTasks.unlock();
     mMutexThreads.lock();
     {
       std::vector<std::shared_ptr<Task>> tasks;
-      for(auto& [pTask, pThread] : mThreads ){
-        if( pThread->joinable() ){
-          pThread->join();
+      for( auto& [ pTask, pThread ] : mThreads ){
+        if( pTask->isRunning() ){
+          pTask->cancel();
+        } else {
           tasks.push_back( pTask );
         }
       }
+
       for( auto& pTask : tasks ){
         mThreads.erase( pTask );
-        std::erase( mTasks, pTask );
       }
     }
     mMutexThreads.unlock();
     std::this_thread::yield();
   }
-  mTasks.clear();
+
   mThreads.clear();
 }
 
@@ -163,14 +158,14 @@ void TaskManager::onTaskCompletion(std::shared_ptr<ITask> pTask)
 bool TaskManager::isRunning(void)
 {
   bool bRunning = false;
-  mMutexTasks.lock();
+  mMutexThreads.lock();
   {
-    for ( auto& pTask : mTasks ) {
+    for( auto& [ pTask, pThread ] : mThreads ){
       bRunning |= pTask->isRunning();
       if (bRunning) break;
     }
   }
-  mMutexTasks.unlock();
+  mMutexThreads.unlock();
   return bRunning;
 }
 
@@ -189,4 +184,11 @@ void TaskManager::finalize(void)
     mTasks.clear();
   }
   mMutexTasks.unlock();
+
+  // remove all threads
+  mMutexThreads.lock();
+  {
+    mThreads.clear();
+  }
+  mMutexThreads.unlock();
 }

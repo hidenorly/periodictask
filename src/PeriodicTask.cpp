@@ -35,7 +35,7 @@ void PeriodicTask::onExecute(void)
 {
   std::chrono::high_resolution_clock::time_point lastTime = std::chrono::high_resolution_clock::now();
 
-  while( mIsRunning && !mStopRunning ){
+  while( mIsRunning && !mStopRunning && !mTasks.empty() ){
     // Adjust the next periodic with the actual execution time
     std::chrono::milliseconds duration = std::chrono::duration_cast<std::chrono::milliseconds>( std::chrono::high_resolution_clock::now() - lastTime );
     std::chrono::milliseconds delayMsec = std::chrono::milliseconds( mPeriodicMsec ) - duration;
@@ -52,7 +52,6 @@ void PeriodicTask::onExecute(void)
         pTask->onExecute();
       }
     mMutexTasks.unlock();
-
   }
 }
 

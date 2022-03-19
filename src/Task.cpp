@@ -41,11 +41,8 @@ void Task::execute(void)
 {
   mStopRunning = false;
   mIsRunning = true;
-    std::shared_ptr<ITask> pTask = std::dynamic_pointer_cast<ITask>( shared_from_this() );
-    if( pTask ){
-      pTask->onExecute();
-      pTask->onComplete();
-    }
+    onExecute();
+    onComplete();
   mIsRunning = false;
   mStopRunning = false;
 }
@@ -60,7 +57,5 @@ void Task::executeThreadFunc(std::shared_ptr<ITask> pTask, std::shared_ptr<Task:
 
 void Task::cancel(void)
 {
-  if( mIsRunning ) {
-    mStopRunning = true;
-  }
+  mStopRunning = true;
 }

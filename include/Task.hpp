@@ -46,7 +46,7 @@ public:
   void execute(void);
   static void executeThreadFunc(std::shared_ptr<ITask> pTask, std::shared_ptr<ITaskNotifier> pNotifier);
   virtual void cancel(void);
-  inline bool isRunning(void){ return mIsRunning; };
+  bool isRunning(void){ return mIsRunning; };
 
 protected:
   void _execute(std::shared_ptr<ITaskNotifier> pNotifier);

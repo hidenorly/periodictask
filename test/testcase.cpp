@@ -117,7 +117,6 @@ TEST_F(TestCase_TaskManager, testThreadPool)
   pThreadPool->terminate();
 }
 
-#if 0
 TEST_F(TestCase_TaskManager, testPeridocTask)
 {
   std::shared_ptr<PeriodicTask> pPeriodicTask = std::make_shared<PeriodicTask>(1000);
@@ -139,7 +138,6 @@ TEST_F(TestCase_TaskManager, testPeridocTask)
   std::cout << "finalize()" << std::endl;
   pTaskMan->finalize();
 }
-#endif
 
 TEST_F(TestCase_TaskManager, testPeridocTaskManager)
 {
