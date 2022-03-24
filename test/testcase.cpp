@@ -20,6 +20,7 @@
 #include "PeriodicTask.hpp"
 #include "ThreadPool.hpp"
 #include "LambdaTask.hpp"
+#include "Timer.hpp"
 #include <iostream>
 #include <chrono>
 
@@ -225,6 +226,37 @@ TEST_F(TestCase_TaskManager, testLambdaTask)
 
   std::cout << "terminate()" << std::endl;
   pThreadPool->terminate();
+}
+
+TEST_F(TestCase_TaskManager, testTimer)
+{
+  class MyTimer : public Timer
+  {
+    public:
+      MyTimer(int nDelayMsec, bool bRepeat = false):Timer(nDelayMsec, bRepeat){};
+      virtual ~MyTimer(){};
+      virtual void onExecute(void){
+        std::cout << "MyTimer (" << std::to_string( reinterpret_cast<uint64_t>( shared_from_this().get() ) ) << "):" << std::to_string( mDelayMsec) << " msec" << std::endl;
+      }
+  };
+
+  std::vector<std::shared_ptr<MyTimer>> timers;
+  timers.push_back( std::make_shared<MyTimer>( 100, true ) );
+  timers.push_back( std::make_shared<MyTimer>( 100, true ) );
+  timers.push_back( std::make_shared<MyTimer>( 300, true ) );
+
+  for( auto& pTimer : timers ){
+    pTimer->start();
+  }
+
+  std::cout << "wait the execution" << std::endl;
+  std::this_thread::sleep_for(std::chrono::microseconds(1000*1000*1)); // 1sec
+
+  for( auto& pTimer : timers ){
+    pTimer->stop();
+  }
+
+  timers.clear();
 }
 
 

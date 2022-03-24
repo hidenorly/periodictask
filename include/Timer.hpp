@@ -14,26 +14,32 @@
    limitations under the License.
 */
 
-#ifndef __TESTCASE_TASKMAN_HPP__
-#define __TESTCASE_TASKMAN_HPP__
+#ifndef __TIMER_HPP__
+#define __TIMER_HPP__
 
-#include <gtest/gtest.h>
+#include "PeriodicTask.hpp"
+#include <mutex>
+#include <memory>
 
-class TestCase_TaskManager : public ::testing::Test
+class Timer : public Task
 {
 protected:
-  TestCase_TaskManager();
-  virtual ~TestCase_TaskManager();
-  virtual void SetUp();
-  virtual void TearDown();
+  inline static std::shared_ptr<IPeriodicTaskManager> mPeriodicTaskManager;
+  inline static std::atomic<int> mTaskManRefCounter = 0;
+  int mDelayMsec;
+  bool mRepeat;
 
-  void testTaskManager(void);
-  void testPeridocTask(void);
-  void testThreadPool(void);
-  void testPeridocTaskManager(void);
-  void testPeridocTaskManagerCancel(void);
-  void testLambdaTask(void);
-  void testTimer(void);
+protected:
+  std::shared_ptr<IPeriodicTaskManager> getTaskManager(void);
+
+public:
+  Timer(int nDelayMsec, bool bRepeat = false);
+  virtual ~Timer();
+
+  virtual void start(void);
+  virtual void stop(void);
+
+  virtual void onExecute(void) = 0;
 };
 
-#endif /* __TESTCASE_TASKMAN_HPP__ */
+#endif /* __TIMER_HPP__ */
