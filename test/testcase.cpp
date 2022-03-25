@@ -236,7 +236,7 @@ TEST_F(TestCase_TaskManager, testTimer)
       MyTimer(int nDelayMsec, bool bRepeat = false):Timer(nDelayMsec, bRepeat){};
       virtual ~MyTimer(){};
       virtual void onExecute(void){
-        std::cout << "MyTimer (" << std::to_string( reinterpret_cast<uint64_t>( shared_from_this().get() ) ) << "):" << std::to_string( mDelayMsec) << " msec" << std::endl;
+        std::cout << "MyTimer (" << std::to_string( reinterpret_cast<uint64_t>( shared_from_this().get() ) ) << "):" << std::to_string( mDelayMsec ) << " msec" << std::endl;
       }
   };
 
@@ -244,16 +244,17 @@ TEST_F(TestCase_TaskManager, testTimer)
   timers.push_back( std::make_shared<MyTimer>( 100, true ) );
   timers.push_back( std::make_shared<MyTimer>( 100, true ) );
   timers.push_back( std::make_shared<MyTimer>( 300, true ) );
+  timers.push_back( std::make_shared<MyTimer>( 133, false ) );
 
   for( auto& pTimer : timers ){
-    pTimer->start();
+    pTimer->schedule();
   }
 
   std::cout << "wait the execution" << std::endl;
   std::this_thread::sleep_for(std::chrono::microseconds(1000*1000*1)); // 1sec
 
   for( auto& pTimer : timers ){
-    pTimer->stop();
+    pTimer->cancelSchedule();
   }
 
   timers.clear();

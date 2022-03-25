@@ -17,27 +17,55 @@
 #ifndef __TIMER_HPP__
 #define __TIMER_HPP__
 
+#include "Task.hpp"
 #include "PeriodicTask.hpp"
+#include "ThreadPool.hpp"
 #include <mutex>
 #include <memory>
+#include <thread>
+#include <chrono>
 
 class Timer : public Task
 {
 protected:
+  class DelayedTask : public Task
+  {
+  protected:
+    std::shared_ptr<Task> mTask;
+    int mDelayMsec;
+  public:
+    DelayedTask(std::shared_ptr<Task> pTask, int nDelayMsec) : mTask( pTask ), mDelayMsec( nDelayMsec ){};
+    virtual ~DelayedTask(){};
+    virtual void onExecute(void){
+      if( mTask ){
+        std::this_thread::sleep_for( std::chrono::milliseconds( mDelayMsec ) );
+        mTask->onExecute();
+      }
+    }
+    virtual void cancel(void){
+      if( mTask ){
+        mTask->cancel();
+      }
+    }
+  };
+
+protected:
   inline static std::shared_ptr<IPeriodicTaskManager> mPeriodicTaskManager;
+  inline static std::shared_ptr<ThreadPool> mThreadPool;
   inline static std::atomic<int> mTaskManRefCounter = 0;
   int mDelayMsec;
   bool mRepeat;
 
 protected:
   std::shared_ptr<IPeriodicTaskManager> getTaskManager(void);
+  std::shared_ptr<ThreadPool> getThreadPool(void);
 
 public:
-  Timer(int nDelayMsec, bool bRepeat = false);
+  Timer(int nDelayMsec, bool bRepeat = true);
   virtual ~Timer();
 
-  virtual void start(void);
-  virtual void stop(void);
+  virtual void schedule(void);
+  virtual void cancelSchedule(void);
 
   virtual void onExecute(void) = 0;
 };

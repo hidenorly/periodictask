@@ -26,6 +26,7 @@ Timer::~Timer()
   mTaskManRefCounter--;
   if( mTaskManRefCounter<=0 ){
     mPeriodicTaskManager.reset();
+    mThreadPool.reset();
     mTaskManRefCounter = 0;
   }
 }
@@ -39,26 +40,49 @@ std::shared_ptr<IPeriodicTaskManager> Timer::getTaskManager(void)
   return mPeriodicTaskManager;
 }
 
-
-void Timer::start(void)
+std::shared_ptr<ThreadPool> Timer::getThreadPool(void)
 {
-  std::shared_ptr<IPeriodicTaskManager> pTaskMan = getTaskManager();
+  if( !mThreadPool ){
+    mThreadPool = std::make_shared<ThreadPool>();
+  }
 
-  if( pTaskMan ){
-    if( mRepeat ){
+  return mThreadPool;
+}
+
+
+void Timer::schedule(void)
+{
+
+  if( mRepeat ){
+    // periodic task (repeated task )
+    std::shared_ptr<IPeriodicTaskManager> pTaskMan = getTaskManager();
+    if( pTaskMan ){
       pTaskMan->scheduleRepeat( shared_from_this(), mDelayMsec );
       pTaskMan->execute();
+    }
+  } else {
+    // non-periodic task (just delayed one shot task )
+    std::shared_ptr<ThreadPool> pThreadPool = getThreadPool();
+    if( pThreadPool ){
+      pThreadPool->addTask( std::make_shared<Timer::DelayedTask>( shared_from_this(), mDelayMsec ) );
+      pThreadPool->execute();
     }
   }
 }
 
-void Timer::stop(void)
+void Timer::cancelSchedule(void)
 {
-  std::shared_ptr<IPeriodicTaskManager> pTaskMan = getTaskManager();
-
-  if( pTaskMan ){
-    if( mRepeat ){
+  if( mRepeat ){
+    // periodic task (repeated task )
+    std::shared_ptr<IPeriodicTaskManager> pTaskMan = getTaskManager();
+    if( pTaskMan ){
       pTaskMan->cancelScheduleRepeat( shared_from_this() );
+    }
+  } else {
+    // non-periodic task (just delayed one shot task )
+    std::shared_ptr<ThreadPool> pThreadPool = getThreadPool();
+    if( pThreadPool ){
+      pThreadPool->canceTask( shared_from_this() );
     }
   }
 }
