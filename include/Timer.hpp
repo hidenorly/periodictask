@@ -39,7 +39,9 @@ protected:
     virtual void onExecute(void){
       if( mTask ){
         std::this_thread::sleep_for( std::chrono::milliseconds( mDelayMsec ) );
-        mTask->onExecute();
+        if( mIsRunning && !mStopRunning ){
+          mTask->onExecute();
+        }
       }
     }
     virtual void cancel(void){
