@@ -25,6 +25,8 @@
 #include <thread>
 #include <chrono>
 
+#include "LambdaTask.hpp"
+
 class Timer : public Task
 {
 protected:
@@ -71,5 +73,19 @@ public:
 
   virtual void onExecute(void) = 0;
 };
+
+
+class LambdaTimer : public Timer
+{
+protected:
+  TASK_LAMBDA mLambdaFunc;
+
+public:
+  LambdaTimer(TASK_LAMBDA lambda, int nDelayMsec, bool bRepeat = true);
+  virtual ~LambdaTimer(void);
+
+  virtual void onExecute(void);
+};
+
 
 #endif /* __TIMER_HPP__ */

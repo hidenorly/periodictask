@@ -86,3 +86,19 @@ void Timer::cancelSchedule(void)
     }
   }
 }
+
+
+LambdaTimer::LambdaTimer(TASK_LAMBDA lambda, int nDelayMsec, bool bRepeat) : Timer( nDelayMsec, bRepeat ), mLambdaFunc( lambda )
+{
+
+}
+
+LambdaTimer::~LambdaTimer(void)
+{
+
+}
+
+void LambdaTimer::onExecute(void)
+{
+  mLambdaFunc( shared_from_this() );
+}

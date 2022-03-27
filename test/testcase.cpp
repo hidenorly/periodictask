@@ -62,6 +62,7 @@ public:
   }
 };
 
+#if 1
 TEST_F(TestCase_TaskManager, testTaskManager)
 {
   std::cout << "Hello, World!" << std::endl;
@@ -86,6 +87,29 @@ TEST_F(TestCase_TaskManager, testTaskManager)
   std::cout << "finalize()" << std::endl;
   pTaskMan->finalize();
 }
+
+TEST_F(TestCase_TaskManager, testPeridocTask)
+{
+  std::shared_ptr<PeriodicTask> pPeriodicTask = std::make_shared<PeriodicTask>(1000);
+  int i = 200;
+  pPeriodicTask->addTask( std::make_shared<MyTask>( i++ ) );
+  pPeriodicTask->addTask( std::make_shared<MyTask>( i++ ) );
+  pPeriodicTask->addTask( std::make_shared<MyTask>( i++ ) );
+
+  std::shared_ptr<TaskManager> pTaskMan = std::make_shared<TaskManager>();
+  pTaskMan->addTask( pPeriodicTask );
+
+  std::cout << "executeAllTasks()" << std::endl;
+  pTaskMan->executeAllTasks();
+
+  std::this_thread::sleep_for(std::chrono::microseconds(1000*1000*5)); // 5sec
+  std::cout << "stopAllTasks()" << std::endl;
+  pTaskMan->stopAllTasks();
+
+  std::cout << "finalize()" << std::endl;
+  pTaskMan->finalize();
+}
+#endif
 
 
 TEST_F(TestCase_TaskManager, testThreadPool)
@@ -118,27 +142,6 @@ TEST_F(TestCase_TaskManager, testThreadPool)
   pThreadPool->terminate();
 }
 
-TEST_F(TestCase_TaskManager, testPeridocTask)
-{
-  std::shared_ptr<PeriodicTask> pPeriodicTask = std::make_shared<PeriodicTask>(1000);
-  int i = 200;
-  pPeriodicTask->addTask( std::make_shared<MyTask>( i++ ) );
-  pPeriodicTask->addTask( std::make_shared<MyTask>( i++ ) );
-  pPeriodicTask->addTask( std::make_shared<MyTask>( i++ ) );
-
-  std::shared_ptr<TaskManager> pTaskMan = std::make_shared<TaskManager>();
-  pTaskMan->addTask( pPeriodicTask );
-
-  std::cout << "executeAllTasks()" << std::endl;
-  pTaskMan->executeAllTasks();
-
-  std::this_thread::sleep_for(std::chrono::microseconds(1000*1000*5)); // 5sec
-  std::cout << "stopAllTasks()" << std::endl;
-  pTaskMan->stopAllTasks();
-
-  std::cout << "finalize()" << std::endl;
-  pTaskMan->finalize();
-}
 
 TEST_F(TestCase_TaskManager, testPeridocTaskManager)
 {
@@ -245,6 +248,42 @@ TEST_F(TestCase_TaskManager, testTimer)
   timers.push_back( std::make_shared<MyTimer>( 100, true ) );
   timers.push_back( std::make_shared<MyTimer>( 300, true ) );
   timers.push_back( std::make_shared<MyTimer>( 133, false ) );
+
+  for( auto& pTimer : timers ){
+    pTimer->schedule();
+  }
+
+  std::cout << "wait the execution" << std::endl;
+  std::this_thread::sleep_for(std::chrono::microseconds(1000*1000*1)); // 1sec
+
+  for( auto& pTimer : timers ){
+    pTimer->cancelSchedule();
+  }
+
+  timers.clear();
+}
+
+
+TEST_F(TestCase_TaskManager, testLambdaTimer)
+{
+  TASK_LAMBDA task = [](std::shared_ptr<Task> pTask){
+    std::chrono::high_resolution_clock::time_point startTime = std::chrono::high_resolution_clock::now();
+    std::cout << "lambdaTask is running..." << std::endl;
+    for(int i=0; i<100; i++){
+      [[maybe_unused]] volatile int j = i * i;
+      std::this_thread::sleep_for(std::chrono::microseconds(100));
+    }
+    std::chrono::high_resolution_clock::time_point endTime = std::chrono::high_resolution_clock::now();
+    std::chrono::milliseconds duration = std::chrono::duration_cast<std::chrono::milliseconds>( endTime - startTime );
+
+    std::cout << "lamndatask is finished (" << std::to_string( duration.count() ) << "msec)." << std::endl;
+  };
+
+  std::vector<std::shared_ptr<LambdaTimer>> timers;
+  timers.push_back( std::make_shared<LambdaTimer>( task, 100, true ) );
+  timers.push_back( std::make_shared<LambdaTimer>( task, 100, true ) );
+  timers.push_back( std::make_shared<LambdaTimer>( task, 300, true ) );
+  timers.push_back( std::make_shared<LambdaTimer>( task, 133, false ) );
 
   for( auto& pTimer : timers ){
     pTimer->schedule();

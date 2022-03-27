@@ -34,6 +34,7 @@ protected:
   void testPeridocTaskManagerCancel(void);
   void testLambdaTask(void);
   void testTimer(void);
+  void testLambdaTimer(void);
 };
 
 #endif /* __TESTCASE_TASKMAN_HPP__ */
