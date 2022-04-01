@@ -10,6 +10,8 @@ This is library to be easier to handle asynchronous task, periodic task and the 
 
 * If you want to use lambda, you can use ```LambdaTask```. This helps to use your lambda for the above managers.
 
+* If you want to use so called Timer simply, you can use ```Timer```. This helps to use your simple timer use without any noticing theabove managers.
+
 * Please refer to testcase.cpp to know how to use them.
 
 
@@ -24,17 +26,17 @@ $ make -j 10
 ```
 $ make -j 10 test
 $ ./bin/asynctasktest
-[==========] Running 5 tests from 1 test suite.
+[==========] Running 7 tests from 1 test suite.
 [----------] Global test environment set-up.
-[----------] 5 tests from TestCase_TaskManager
+[----------] 7 tests from TestCase_TaskManager
 [ RUN      ] TestCase_TaskManager.testTaskManager
 ..snip..
-[       OK ] TestCase_TaskManager.testLambdaTask (5010 ms)
-[----------] 5 tests from TestCase_TaskManager (25345 ms total)
+[       OK ] TestCase_TaskManager.testTimer (1004 ms)
+[----------] 7 tests from TestCase_TaskManager (31239 ms total)
 
 [----------] Global test environment tear-down
-[==========] 5 tests from 1 test suite ran. (25345 ms total)
-[  PASSED  ] 5 tests.
+[==========] 7 tests from 1 test suite ran. (31239 ms total)
+[  PASSED  ] 7 tests.
 ```
 
 ## structure
@@ -50,7 +52,8 @@ $ ./bin/asynctasktest
 │  ├── PeriodicTask.hpp
 │  ├── Task.hpp
 │  ├── TaskManager.hpp
-│  └── ThreadPool.hpp
+│  ├── ThreadPool.hpp
+│  └── Timer.hpp
 ├── lib
 │  └── libasynctask.dylib : built artifact
 ├── out : built intermediated output
@@ -59,7 +62,8 @@ $ ./bin/asynctasktest
 │  ├── PeriodicTask.cpp
 │  ├── Task.cpp
 │  ├── TaskManager.cpp
-│  └── ThreadPool.cpp
+│  ├── ThreadPool.cpp
+│  └── Timer.cpp
 └── test
     ├── testcase.cpp
     └── testcase.hpp
@@ -69,6 +73,7 @@ $ ./bin/asynctasktest
 ## Confirmed environment
 
 * MacOS Monterey 12.3
-* clang++ 13.0.0
-  ```Apple clang version 13.0.0 (clang-1300.0.29.3)
+* clang++ 13.1.6
+
+```Apple clang version 13.1.6 (clang-1316.0.21.2)
 Target: arm64-apple-darwin21.4.0```
