@@ -10,7 +10,9 @@ This is library to be easier to handle asynchronous task, periodic task and the 
 
 * If you want to use lambda, you can use ```LambdaTask```. This helps to use your lambda for the above managers.
 
-* If you want to use so called Timer simply, you can use ```Timer```. This helps to use your simple timer use without any noticing theabove managers.
+* If you want to use so called Timer simply, you can use ```Timer```. This helps to use your simple timer use without any noticing the above managers.
+
+* If you want to use Timer as lambda manner, you can use ```LambdaTimer```. 
 
 * Please refer to testcase.cpp to know how to use them.
 
@@ -26,17 +28,17 @@ $ make -j 10
 ```
 $ make -j 10 test
 $ ./bin/asynctasktest
-[==========] Running 7 tests from 1 test suite.
+[==========] Running 8 tests from 1 test suite.
 [----------] Global test environment set-up.
-[----------] 7 tests from TestCase_TaskManager
+[----------] 8 tests from TestCase_TaskManager
 [ RUN      ] TestCase_TaskManager.testTaskManager
 ..snip..
-[       OK ] TestCase_TaskManager.testTimer (1004 ms)
-[----------] 7 tests from TestCase_TaskManager (31239 ms total)
+[       OK ] TestCase_TaskManager.testLambdaTimer (1005 ms)
+[----------] 8 tests from TestCase_TaskManager (32244 ms total)
 
 [----------] Global test environment tear-down
-[==========] 7 tests from 1 test suite ran. (31239 ms total)
-[  PASSED  ] 7 tests.
+[==========] 8 tests from 1 test suite ran. (32244 ms total)
+[  PASSED  ] 8 tests.
 ```
 
 ## structure
